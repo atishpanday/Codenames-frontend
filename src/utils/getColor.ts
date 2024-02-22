@@ -1,6 +1,4 @@
-import { CardColorType } from "../types/dataTypes";
-
-export const getColor = (type: CardColorType) => {
+export const getColor = (type: string | undefined) => {
     switch (type) {
         case 'red':
             return '#cc0000';

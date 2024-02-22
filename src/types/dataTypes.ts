@@ -1,15 +1,22 @@
 export type CardType = {
     index: number,
-    type: CardColorType,
+    type: string | undefined,
     word: string,
     selected: boolean,
-}
+};
 
-export type CardColorType = 'red' | 'blue' | 'bystander' | 'assassin' | undefined;
+// export type CardColorType = 'red' | 'blue' | 'bystander' | 'assassin' | undefined;
 
 export type RoundType = {
-    turn: 'red' | 'blue' | undefined,
+    turn: string | undefined,
     clue: string,
     numIntendedWords: number,
-    numCardsSelected: number,
-}
+    numCardsLeft: number,
+    isFetchingClues: boolean,
+};
+
+export type GameType = {
+    inProgress: boolean,
+    winner: string | undefined,
+    gameOver: boolean,
+};

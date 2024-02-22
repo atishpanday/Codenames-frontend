@@ -20,11 +20,11 @@ const WordCard = ({ card, round, handleSelection }: WordCardProps) => {
         justifyContent: "center",
         alignItems: "center",
         boxShadow: "2px 2px lightgray",
-        cursor: round.numCardsSelected === round.numIntendedWords ? "not-allowed" : "pointer",
+        cursor: round.numCardsLeft === 0 ? "not-allowed" : "pointer",
     }
 
     return (
-        <Box style={wordCardStyle} onClick={() => round.numCardsSelected < round.numIntendedWords && handleSelection(card)}>
+        <Box style={wordCardStyle} onClick={() => round.numCardsLeft > 0 && handleSelection(card)}>
             <Typography color={card.selected && card.type !== 'bystander' ? 'white' : 'black'} fontSize={"large"} fontStyle={"italic"}>
                 {card.word.toUpperCase()}
             </Typography>

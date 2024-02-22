@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 
 import WordBoard from './components/WordBoard.tsx';
 
-import { CardColorType, CardType, RoundType } from './types/dataTypes.ts';
-import { Box, Button, CircularProgress, Grid, Snackbar, Typography } from '@mui/material';
+import { CardType, GameType, RoundType } from './types/dataTypes.ts';
+import { Backdrop, Box, Button, CircularProgress, Grid, Typography } from '@mui/material';
 import ReferenceCard from './components/ReferenceCard.tsx';
 import { getColor } from './utils/getColor.ts';
 import fetchWords from './api/fetchWords.ts';
@@ -24,59 +24,88 @@ const CodenamesApp = () => {
         turn: undefined,
         clue: "",
         numIntendedWords: 0,
-        numCardsSelected: 0,
+        numCardsLeft: 0,
+        isFetchingClues: false,
     });
 
-    const [isFetchingClues, setIsFetchingClues] = useState<boolean>(false);
+    const [game, setGame] = useState<GameType>({
+        inProgress: false,
+        winner: undefined,
+        gameOver: false,
+    })
 
-    const [gameOver, setGameOver] = useState<boolean>(false);
-
-    const [winnner, setWinner] = useState<CardColorType | undefined>();
+    const [selectedCard, setSelectedCard] = useState<CardType>({
+        index: 0,
+        type: undefined,
+        word: "",
+        selected: false,
+    })
 
     const handleSelection = (card: CardType) => {
-        for (let i = 0; i < cards.length; i = i + 1) {
-            if (card.word === cards[i].word) {
-                setCards((prev) => prev.map((card, ind) => ind === i ? { ...card, selected: true } : card));
-            }
-        }
+        setCards((prev) => prev.map((c) => card.index === c.index ? { ...c, selected: true } : c));
+        setSelectedCard({ ...card, selected: true });
 
         if (card.type === "assassin") {
-            setGameOver(true);
-            setWinner(round.turn === "red" ? "blue" : "red");
-            setRound({
+            setGame({
+                inProgress: false,
+                gameOver: true,
+                winner: round.turn === "red" ? "blue" : "red",
+            });
+            return setRound({
                 turn: undefined,
                 clue: "",
-                numCardsSelected: 0,
+                numCardsLeft: 0,
                 numIntendedWords: 0,
+                isFetchingClues: false,
             });
         }
 
-        if (card.type !== round.turn) {
-            return setRound(prev => ({
+        if (round.numCardsLeft === 1 ||
+            card.type === "bystander" ||
+            ((card.type === "red" && round.turn === "blue") ||
+                (card.type === "blue" && round.turn === "red"))) {
+            setRound(prev => ({
                 ...prev,
                 turn: prev.turn === "red" ? "blue" : "red",
-                clue: "",
-                numCardsSelected: 0,
+                numCardsLeft: 0,
                 numIntendedWords: 0,
+                clue: "",
+            }));
+        }
+        else {
+            setRound(prev => ({
+                ...prev,
+                numCardsLeft: prev.numCardsLeft - 1,
             }))
         }
-
-        setRound(prev => ({
-            ...prev,
-            numCardsSelected: prev.numCardsSelected + 1
-        }));
     }
 
     useEffect(() => {
-        if (round.numCardsSelected === round.numIntendedWords) {
-            if (round.turn === "red") {
-                setRound(prev => ({ ...prev, turn: "blue" }))
+        console.log("card selected");
+        if (selectedCard.type === "red" || selectedCard.type === "blue") {
+            let count = 0;
+            for (let i = 0; i < cards.length; i = i + 1) {
+                if (cards[i].selected && cards[i].type === selectedCard.type) {
+                    count = count + 1;
+                }
             }
-            else if (round.turn === "blue") {
-                setRound(prev => ({ ...prev, turn: "red" }))
+
+            if (count === cards.filter(c => c.type === selectedCard.type).length) {
+                setGame({
+                    inProgress: false,
+                    winner: selectedCard.type,
+                    gameOver: true
+                });
+                return setRound({
+                    turn: selectedCard.type === "red" ? "blue" : "red",
+                    clue: "",
+                    numCardsLeft: 0,
+                    numIntendedWords: 0,
+                    isFetchingClues: false,
+                })
             }
         }
-    }, [round.numCardsSelected])
+    }, [selectedCard]);
 
     return (
         <Box height={"100vh"} p={1}>
@@ -86,30 +115,41 @@ const CodenamesApp = () => {
                 </Grid>
                 <Grid item xs={3} alignSelf={"center"} display={"flex"} flexDirection={"column"} justifyContent={"center"} alignItems={"center"}>
                     <Typography fontSize={24} textAlign={"center"}>{`TURN: ${round.turn ? String(round.turn).toUpperCase() : ""}`}</Typography>
-                    <ReferenceCard cards={cards} round={round} gameOver={gameOver} />
+                    <ReferenceCard cards={cards} round={round} gameOver={game.gameOver} />
                 </Grid>
                 <Grid item xs={9}>
                     <Box height={140} borderRadius={2} boxShadow={`0 0 20px 5px ${getColor(round.turn)}`} display={"flex"} alignItems={"center"} justifyContent={"center"}>
-                        {isFetchingClues ?
+                        {round.isFetchingClues ?
                             <CircularProgress /> :
                             <Typography fontStyle={"italic"} fontSize={40}>
-                                {`${round.clue ? String(round.clue).toUpperCase() : ""} ${round.numIntendedWords > 0 ? round.numIntendedWords : ""}`}
+                                {round.clue ?
+                                    `${String(round.clue).toUpperCase()} ${round.numIntendedWords}` :
+                                    (round.turn ? `GENERATE HINT FOR ${String(round.turn).toUpperCase()}` : "HINTS WILL BE DISPLAYED HERE")}
                             </Typography>
                         }
                     </Box>
                 </Grid>
                 <Grid item xs={3}>
                     <Box height={140} display={"flex"} flexDirection={"column"} alignItems={"center"} justifyContent={"space-around"}>
-                        <Button style={{ textTransform: "none", fontSize: "24px" }} variant={"outlined"} fullWidth onClick={() => fetchWords(round, setCards, setRound)}>
+                        <Button style={{ textTransform: "none", fontSize: "24px" }} variant={"outlined"} fullWidth onClick={() => fetchWords(setCards, setRound)}>
                             New Game
                         </Button>
-                        <Button style={{ textTransform: "none", fontSize: "24px" }} variant={"contained"} fullWidth onClick={() => fetchClues(cards, round, setRound, setIsFetchingClues)}>
+                        <Button style={{ textTransform: "none", fontSize: "24px" }} variant={"contained"} fullWidth disabled={round.numCardsLeft > 0} onClick={() => round.numCardsLeft === 0 && fetchClues(cards, round, setRound)}>
                             Generate Hint
                         </Button>
                     </Box>
                 </Grid>
             </Grid>
-            <Snackbar anchorOrigin={{ vertical: "top", horizontal: "center" }} open={gameOver} onClose={() => { }} message={`${String(winnner).toUpperCase()} TEAM WON!`} autoHideDuration={2000} />
+            <Backdrop open={!game.inProgress} onClick={() => { }} sx={{ display: "flex", flexDirection: "column" }}>
+                <Typography fontSize={80} fontFamily={"cursive"} color={"orange"}>CODENAMES</Typography>
+                {game.winner && <Typography fontSize={60} fontStyle={"italic"} color={`${game.winner}`}>{`${String(game.winner).toUpperCase()} TEAM WON!`}</Typography>}
+                <Button style={{ textTransform: "none", fontSize: "24px" }} variant={"contained"} onClick={() => {
+                    setGame({ winner: undefined, gameOver: false, inProgress: true });
+                    fetchWords(setCards, setRound);
+                }}>
+                    New Game
+                </Button>
+            </Backdrop>
         </Box >
     );
 }
