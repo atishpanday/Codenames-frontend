@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import WordBoard from './components/WordBoard.tsx';
 
 import { CardType, GameType, RoundType } from './types/dataTypes.ts';
-import { Backdrop, Box, Button, CircularProgress, Grid, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Grid, Modal, Typography } from '@mui/material';
 import ReferenceCard from './components/ReferenceCard.tsx';
 import { getColor } from './utils/getColor.ts';
 import fetchWords from './api/fetchWords.ts';
@@ -140,16 +140,18 @@ const CodenamesApp = () => {
                     </Box>
                 </Grid>
             </Grid>
-            <Backdrop open={!game.inProgress} onClick={() => { }} sx={{ display: "flex", flexDirection: "column" }}>
-                <Typography fontSize={80} fontFamily={"cursive"} color={"orange"}>CODENAMES</Typography>
-                {game.winner && <Typography fontSize={60} fontStyle={"italic"} color={`${game.winner}`}>{`${String(game.winner).toUpperCase()} TEAM WON!`}</Typography>}
-                <Button style={{ textTransform: "none", fontSize: "24px" }} variant={"contained"} onClick={() => {
-                    setGame({ winner: undefined, gameOver: false, inProgress: true });
-                    fetchWords(setCards, setRound);
-                }}>
-                    New Game
-                </Button>
-            </Backdrop>
+            <Modal open={!game.inProgress} onClick={() => { }} sx={{ display: "flex", flexDirection: "column" }}>
+                <Box padding={4} margin={"auto"} width={800} height={400} display={"flex"} flexDirection={"column"} justifyContent={"center"} bgcolor={"background.paper"} borderRadius={2}>
+                    <Typography fontSize={80} color={"orange"} align={"center"}>CODENAMES</Typography>
+                    {game.winner && <Typography fontSize={60} color={`${game.winner}`} align={"center"}>{`${String(game.winner).toUpperCase()} TEAM WON!`}</Typography>}
+                    <Button style={{ textTransform: "none", fontSize: "24px" }} variant={"contained"} onClick={() => {
+                        setGame({ winner: undefined, gameOver: false, inProgress: true });
+                        fetchWords(setCards, setRound);
+                    }}>
+                        New Game
+                    </Button>
+                </Box>
+            </Modal>
         </Box >
     );
 }
