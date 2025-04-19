@@ -11,7 +11,7 @@ const fetchClues = async (
   setRound((prev) => ({ ...prev, isFetchingClues: true }));
   try {
     const response = await axios.post(
-      backendUrl + "/get-clue?turn=" + round.turn,
+      `${backendUrl}/get-clue?turn=${round.turn}`,
       cards
     );
     const data = response.data;

@@ -10,11 +10,7 @@ const fetchWords = async (
 ) => {
   const turn = Math.random() > 0.5 ? "red" : "blue";
   try {
-    const response = await axios.get(backendUrl + "/", {
-      params: {
-        first: turn,
-      },
-    });
+    const response = await axios.get(`${backendUrl}?first=${turn}`);
     const data = response.data;
     setCards(shuffleArray(data));
     setRound({
