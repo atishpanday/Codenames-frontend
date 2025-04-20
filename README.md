@@ -2,7 +2,7 @@
 
 ## Where to play
 
-Play with your friends by visiting [here](codenames.duckdns.org)
+Play with your friends by visiting [here](https://codenames.duckdns.org)
 
 A React-based implementation of the popular board game Codenames with an AI assistant that generates clues. Players can experience the classic word-guessing game while receiving AI-generated hints.
 
